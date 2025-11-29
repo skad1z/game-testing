@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Industrial Town Clicker v13</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="itc-body">
+<div class="itc-bg"></div>
+
+<div class="itc-app">
+    <!-- HUD -->
+    <header class="itc-hud">
+        <div class="itc-hud-card itc-hud-money">
+            <div class="itc-hud-icon">💰</div>
+            <div class="itc-hud-label">Деньги</div>
+            <div class="itc-hud-value" id="itcMoney">0</div>
+        </div>
+        <div class="itc-hud-card itc-hud-click">
+            <div class="itc-hud-icon">⚡</div>
+            <div class="itc-hud-label">За клик</div>
+            <div class="itc-hud-value" id="itcPerClick">+1</div>
+        </div>
+        <div class="itc-hud-card itc-hud-auto">
+            <div class="itc-hud-icon">🤖</div>
+            <div class="itc-hud-label">Авто / сек</div>
+            <div class="itc-hud-value" id="itcAuto">0</div>
+        </div>
+        <div class="itc-hud-card itc-hud-mult">
+            <div class="itc-hud-icon">⭐</div>
+            <div class="itc-hud-label">Множитель</div>
+            <div class="itc-hud-value" id="itcMult">x1.0</div>
+        </div>
+    </header>
+
+    <!-- Верхняя панель -->
+    <section class="itc-topbar">
+        <div class="itc-res-group">
+            <span class="itc-res-pill itc-res-pill-token">🟣 Жетоны: <span id="itcTokensHud">0</span></span>
+            <span class="itc-res-pill itc-res-pill-gear">⚙ Шестерёнки: <span id="itcGearsHud">0</span></span>
+            <button class="itc-res-pill itc-res-pill-boost" id="itcBoostBtn" type="button">
+                🚀 x2 за рекламу<span id="itcBoostTimer"></span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Табы -->
+    <nav class="itc-tabs">
+        <button class="itc-tab-btn is-active" data-tab="city">🏭 Город</button>
+        <button class="itc-tab-btn" data-tab="tasks">📋 Задачи</button>
+        <button class="itc-tab-btn" data-tab="shop">🛒 Магазин</button>
+        <button class="itc-tab-btn" data-tab="leaders">🏆 Лидеры</button>
+    </nav>
+
+    <!-- Вкладка: Город -->
+    <div class="itc-view itc-view-city is-active" id="itcViewCity">
+        <main class="itc-main">
+            <!-- Центр: станок -->
+            <section class="itc-center">
+                <div class="itc-machine-wrapper">
+                    <div class="itc-machine-base"></div>
+                    <button id="itcClickBtn" class="itc-machine" type="button">
+                        <div class="itc-machine-glow-ring"></div>
+                        <div class="itc-machine-core">
+                            <div class="itc-machine-icon">☝️</div>
+                            <span class="itc-machine-label">КЛИКНИ</span>
+                        </div>
+                        <div class="itc-machine-rings"></div>
+                    </button>
+                    <div class="itc-float-layer" id="itcFloatLayer"></div>
+                </div>
+            </section>
+
+            <!-- Правая колонка -->
+            <aside class="itc-sidebar">
+                <!-- Прогресс -->
+                <section class="itc-card itc-progress-card">
+                    <div class="itc-card-header">
+                        <span class="itc-card-title">Уровень города</span>
+                        <span class="itc-card-level">Lv. <span id="itcLevel">1</span></span>
+                    </div>
+                    <div class="itc-progress-row">
+                        <div class="itc-progress-label">До следующего уровня</div>
+                        <div class="itc-progress-value">
+                            <span id="itcXpCurrent">0</span> / <span id="itcXpNext">50</span>
+                        </div>
+                    </div>
+                    <div class="itc-progress-bar">
+                        <div id="itcProgressFill" class="itc-progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <ul class="itc-progress-bonuses">
+                        <li>+1 к доходу за клик при каждом уровне</li>
+                        <li>Шанс крита растёт вместе с уровнем</li>
+                        <li>Следующий уровень: <span id="itcNextBonus" class="itc-progress-next-bonus">+5% к шансу крита</span></li>
+                    </ul>
+                    <div class="itc-progress-row">
+                        <div class="itc-progress-label">Текущий крит</div>
+                        <div class="itc-progress-value">
+                            <span id="itcCritStat">10%</span>
+                        </div>
+                    </div>
+                    <div class="itc-milestone">
+                        Этап города: <span id="itcMilestone">0</span> <span class="itc-milestone-note">(бонусы каждые 5 уровней)</span>
+                    </div>
+                </section>
+
+                <!-- Панели: ежедневка + престиж + моды -->
+                <section class="itc-panel-grid">
+                    <article class="itc-card itc-daily-card">
+                        <div class="itc-card-header">
+                            <span class="itc-card-title">Ежедневный бонус</span>
+                            <span class="itc-pill itc-pill-green" id="itcDailyState">Готов</span>
+                        </div>
+                        <p class="itc-card-text">
+                            Один раз в 24 часа, зависят от твоего прогресса.
+                        </p>
+                        <button class="itc-btn itc-btn-primary" id="itcDailyBtn">Получить</button>
+                        <div class="itc-hint" id="itcDailyHint">
+                            Зависит от уровня, жетонов и шестерёнок.
+                        </div>
+                    </article>
+
+                    <article class="itc-card itc-prestige-card">
+                        <div class="itc-card-header">
+                            <span class="itc-card-title">Перезапуск города</span>
+                            <span class="itc-pill itc-pill-purple">Жетоны: <span id="itcTokens">0</span></span>
+                        </div>
+                        <p class="itc-card-text">
+                            Обнуляет город, но даёт жетоны и модификаторы, усиливающие доход навсегда.
+                        </p>
+                        <div class="itc-prestige-row">
+                            <div class="itc-prestige-label">Пост. множитель</div>
+                            <div class="itc-prestige-value" id="itcPrestigeMult">x1.0</div>
+                        </div>
+                        <div class="itc-hint" id="itcPrestigeHint">
+                            Доступно с 10 уровня или суммарного заработка 50k монет.
+                        </div>
+                        <button class="itc-btn itc-btn-warning" id="itcPrestigeBtn" disabled>
+                            Перезапустить
+                        </button>
+                    </article>
+
+                    <article class="itc-card itc-mods-card">
+                        <div class="itc-card-header">
+                            <span class="itc-card-title">Модификаторы города</span>
+                        </div>
+                        <ul class="itc-mods-list" id="itcModsList">
+                            <li class="itc-mods-empty">Пока модификаторов нет. Совершай перезапуск города.</li>
+                        </ul>
+                    </article>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Вкладка: Задачи -->
+    <div class="itc-view itc-view-tasks" id="itcViewTasks">
+        <section class="itc-tasks">
+            <div class="itc-tasks-header">
+                <h2 class="itc-tasks-title">Задачи</h2>
+                <span class="itc-tasks-subtitle">
+                    Выполняй задачи, забирай награды и ускоряй развитие города.
+                </span>
+            </div>
+            <div class="itc-tasks-list" id="itcTasksList">
+                <!-- задачи рендерятся в main.js -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Вкладка: Магазин -->
+    <div class="itc-view itc-view-shop" id="itcViewShop">
+        <section class="itc-shop-page">
+            <header class="itc-shop-header">
+                <h2 class="itc-shop-title">Магазин улучшений</h2>
+                <div class="itc-shop-currencies">
+                    <span>💰 Деньги: <strong id="itcShopMoney">0</strong></span>
+                    <span>🟣 Жетоны: <strong id="itcShopTokens">0</strong></span>
+                    <span>⚙ Шестерёнки: <strong id="itcShopGears">0</strong></span>
+                </div>
+            </header>
+            <p class="itc-shop-subtitle">
+                Ветки прокачки: клики, авто-доход, криты, жетоны и шестерёнки.
+            </p>
+            <div class="itc-shop-filters">
+                <button class="itc-shop-filter is-active" data-cat="all">Все</button>
+                <button class="itc-shop-filter" data-cat="click">Клики</button>
+                <button class="itc-shop-filter" data-cat="auto">Авто-доход</button>
+                <button class="itc-shop-filter" data-cat="crit">Криты</button>
+                <button class="itc-shop-filter" data-cat="token">Престиж</button>
+                <button class="itc-shop-filter" data-cat="gear">⚙ Шестерёнки</button>
+            </div>
+            <div class="itc-shop-items" id="itcShopItems">
+                <!-- карточки улучшений рендерятся в main.js -->
+            </div>
+        </section>
+    </div>
+
+
+    <!-- Вкладка: Таблица лидеров -->
+    <div class="itc-view itc-view-leaders" id="itcViewLeaders">
+        <section class="itc-leaderboard">
+            <div class="itc-leaderboard-header">
+                <h2 class="itc-leaderboard-title">Таблица лидеров</h2>
+                <span class="itc-leaderboard-subtitle">
+                    Топ-100 директоров города по числу перезапусков.
+                </span>
+            </div>
+            <div class="itc-leaderboard-table">
+                <div class="itc-lb-row itc-lb-row-head">
+                    <div class="itc-lb-col-rank">#</div>
+                    <div class="itc-lb-col-name">Игрок</div>
+                    <div class="itc-lb-col-score">Перезапуски</div>
+                </div>
+                <div class="itc-lb-body" id="itcLeaderboardList">
+                    <!-- строки рейтинга рендерятся в main.js -->
+                </div>
+            </div>
+            <p class="itc-leaderboard-note">
+                Твои перезапуски: <span id="itcLbMyPrestige">0</span>.
+            </p>
+            <p class="itc-leaderboard-note itc-leaderboard-note-rank">
+                Твоё место в общем рейтинге: <span id="itcLbMyPlace">—</span>
+                <span id="itcLbMyPlaceDelta" class="itc-lb-place-delta"></span>
+            </p>
+        </section>
+    </div>
+
+<!-- Модальное окно перезапуска города -->
+<div class="itc-modal-backdrop" id="itcPrestigeModal">
+    <div class="itc-modal">
+        <div class="itc-modal-header">
+            <div class="itc-modal-title">Перезапустить город?</div>
+            <button class="itc-modal-close" id="itcPrestigeCloseBtn">✕</button>
+        </div>
+        <div class="itc-modal-body">
+            <p class="itc-modal-text">
+                Перезапуск обнулит прогресс города, но вы получите <strong>жетоны</strong> и увеличите постоянный множитель дохода.
+            </p>
+
+            <div class="itc-modal-section">
+                <div class="itc-modal-section-title">Текущий статус</div>
+                <div class="itc-modal-grid">
+                    <div class="itc-modal-label">Уровень города</div>
+                    <div class="itc-modal-value" id="itcModalPrestigeLevel">1</div>
+                    <div class="itc-modal-label">Всего заработано</div>
+                    <div class="itc-modal-value" id="itcModalPrestigeTotal">0 монет</div>
+                    <div class="itc-modal-label">Текущий множитель</div>
+                    <div class="itc-modal-value" id="itcModalPrestigeMultNow">x1.0</div>
+                </div>
+            </div>
+
+            <div class="itc-modal-section">
+                <div class="itc-modal-section-title">После перезапуска вы получите</div>
+                <div class="itc-modal-grid">
+                    <div class="itc-modal-label">Жетонов</div>
+                    <div class="itc-modal-value" id="itcModalPrestigeTokensGain">+0</div>
+                    <div class="itc-modal-label">Новый множитель</div>
+                    <div class="itc-modal-value" id="itcModalPrestigeMultAfter">x1.0</div>
+                </div>
+            </div>
+
+            <div class="itc-modal-section">
+                <div class="itc-modal-section-title">Условия перезапуска</div>
+                <ul class="itc-modal-conditions">
+                    <li id="itcModalCondLevel"><span class="itc-cond-check"></span>Уровень города ≥ 10</li>
+                    <li id="itcModalCondEarn"><span class="itc-cond-check"></span>Суммарный заработок ≥ 50 000 монет</li>
+                </ul>
+            </div>
+        </div>
+        <div class="itc-modal-footer">
+            <button class="itc-btn itc-btn-secondary" id="itcPrestigeCancelBtn">Отмена</button>
+            <button class="itc-btn itc-btn-primary" id="itcPrestigeAdBtn">x2 жетоны (реклама)</button>
+            <button class="itc-btn itc-btn-warning" id="itcPrestigeConfirmBtn">Перезапустить</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Yandex Games SDK -->
+<script src="https://yandex.ru/games/sdk/v2"></script>
+<script>
+    (function() {
+        if (typeof YaGames !== "undefined") {
+            YaGames.init().then(function(sdk) {
+                window.ysdk = sdk;
+                try {
+                    if (sdk.environment && sdk.environment.i18n && sdk.environment.i18n.lang) {
+                        // сохраняем язык окружения для игры
+                        window.itcYaLang = sdk.environment.i18n.lang;
+                    }
+                } catch (e) {
+                    console.warn("YaGames i18n error", e);
+                }
+                console.log("YaGames SDK initialized");
+            }).catch(function(err) {
+                console.warn("YaGames init error", err);
+            });
+        } else {
+            console.log("YaGames SDK not found (probably local run)");
+        }
+    })();
+</script>
+
+<div class="itc-lang-floating">
+    <button class="itc-lang-floating-btn" id="itcLangSwitchBtn">RU</button>
+</div>
+<script src="main.js"></script>
+</body>
+</html>
