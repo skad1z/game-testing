@@ -2077,8 +2077,7 @@ html, body { touch-action: manipulation; }
         font-size: 0.72rem;
     }
 
-    /* lists inside side panels and shop/leaderboard are scrollable if needed,
-       but the page itself stays fixed */
+    /* Внутренние списки могут скроллиться, страница — нет */
     .itc-shop-items {
         max-height: 230px;
     }
