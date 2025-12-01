@@ -1,5 +1,15 @@
 "use strict";
 
+// Глобально блокируем контекстное меню и выделение текста,
+// чтобы при взаимодействии с игрой не всплывал браузерный UI.
+document.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+}, { capture: true });
+
+document.addEventListener("selectstart", function (e) {
+    e.preventDefault();
+}, { capture: true });
+
 // ---------- Языки / локализация ----------
 
 const ITC_LANGS = ["ru", "en"];
@@ -13,7 +23,7 @@ const ITC_STRINGS = {
         hudMult: "Множитель",
         tokensLabel: "Жетоны",
         gearsLabel: "Шестерёнки",
-        boostButton: "x2 за рекламу",
+        boostButton: "x2 доход 30с (реклама)",
 
         tabCity: "Город",
         tabTasks: "Задачи",
@@ -91,7 +101,7 @@ const ITC_STRINGS = {
         hudMult: "Multiplier",
         tokensLabel: "Tokens",
         gearsLabel: "Gears",
-        boostButton: "x2 by ad",
+        boostButton: "x2 income 30s (ad)",
 
         tabCity: "City",
         tabTasks: "Tasks",
@@ -163,6 +173,20 @@ const ITC_STRINGS = {
         toastError: "Error!"
     }
 };
+
+function itcApplySdkLanguage(rawLang) {
+    if (!rawLang) return;
+    var lang = String(rawLang).toLowerCase();
+    var target = "ru";
+    if (lang.indexOf("en") === 0) target = "en";
+    else if (lang.indexOf("ru") === 0) target = "ru";
+    itcSetLanguage(target);
+}
+
+if (typeof window !== "undefined") {
+    window.itcApplySdkLanguage = itcApplySdkLanguage;
+}
+
 
 // English texts for tasks and upgrades (id-based)
 const ITC_TASK_TITLES_EN = {
@@ -457,13 +481,7 @@ function itcApplyLanguageToUI() {
             ? "Resets the city but gives tokens and modifiers that permanently increase income."
             : "Обнуляет город, но даёт жетоны и модификаторы, усиливающие доход навсегда.";
     }
-
-    // floating button
-    const floatBtn = document.getElementById("itcLangSwitchBtn");
-    if (floatBtn) {
-        floatBtn.textContent = itcCurrentLang.toUpperCase();
-    }
-}
+};
 
 function itcInitLanguage() {
     let lang = "ru";
@@ -752,6 +770,134 @@ let clickHeat = 0;
 let lastDailyAt = 0; // timestamp ms
 const DAILY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
+
+const ITC_SAVE_KEY = "itc_save_v1";
+
+function saveGame() {
+    try {
+        const data = {
+            money,
+            totalClicks,
+            totalEarned,
+
+            perClickBase,
+            perClickBonus,
+            perClickMult,
+
+            autoBase,
+            autoBonus,
+            autoMult,
+
+            critChanceBase,
+            critChanceBonus,
+            critMultBase,
+            critMultBonus,
+
+            prestigeMult,
+            prestigeCount,
+            level,
+            xp,
+            xpToNext,
+            milestonesUnlocked,
+
+            gears,
+            tokens,
+            lastDailyAt,
+
+            adBoostActive,
+            adBoostUntil,
+
+            tasks: tasks.map(function (t) {
+                return {
+                    id: t.id,
+                    progress: t.progress,
+                    completed: t.completed,
+                    claimed: t.claimed,
+                    nextResetAt: t.nextResetAt || 0
+                };
+            }),
+
+            upgrades: upgrades.map(function (u) {
+                return {
+                    id: u.id,
+                    level: u.level
+                };
+            })
+        };
+
+        localStorage.setItem(ITC_SAVE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.warn("saveGame error", e);
+    }
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem(ITC_SAVE_KEY);
+        if (!raw) return;
+
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== "object") return;
+
+        money          = data.money          || 0;
+        totalClicks    = data.totalClicks    || 0;
+        totalEarned    = data.totalEarned    || 0;
+
+        perClickBase   = data.perClickBase   || 1;
+        perClickBonus  = data.perClickBonus  || 0;
+        perClickMult   = data.perClickMult   || 1;
+
+        autoBase       = data.autoBase       || 0;
+        autoBonus      = data.autoBonus      || 0;
+        autoMult       = data.autoMult       || 1;
+
+        critChanceBase = data.critChanceBase || 0.1;
+        critChanceBonus= data.critChanceBonus|| 0;
+        critMultBase   = data.critMultBase   || 2;
+        critMultBonus  = data.critMultBonus  || 0;
+
+        prestigeMult   = data.prestigeMult   || 1;
+        prestigeCount  = data.prestigeCount  || 0;
+
+        level          = data.level          || 1;
+        xp             = data.xp             || 0;
+        xpToNext       = data.xpToNext       || xpNeededForLevel(level);
+        milestonesUnlocked = data.milestonesUnlocked || 0;
+
+        gears          = data.gears          || 0;
+        tokens         = data.tokens         || 0;
+        lastDailyAt    = data.lastDailyAt    || 0;
+
+        adBoostActive  = !!data.adBoostActive;
+        adBoostUntil   = data.adBoostUntil || 0;
+
+        if (Array.isArray(data.tasks)) {
+            data.tasks.forEach(function (saved) {
+                const t = tasks.find(function (tt) { return tt.id === saved.id; });
+                if (!t) return;
+                t.progress    = saved.progress   || 0;
+                t.completed   = !!saved.completed;
+                t.claimed     = !!saved.claimed;
+                t.nextResetAt = saved.nextResetAt || 0;
+            });
+        }
+
+        if (Array.isArray(data.upgrades)) {
+            data.upgrades.forEach(function (saved) {
+                const u = upgrades.find(function (uu) { return uu.id === saved.id; });
+                if (!u) return;
+                u.level = saved.level || 0;
+            });
+        }
+    } catch (e) {
+        console.warn("loadGame error", e);
+    }
+}
+
+window.addEventListener("beforeunload", function () {
+    try { saveGame(); } catch (e) {}
+});
+
 // ---------- DOM ----------
 
 const elMoney      = document.getElementById("itcMoney");
@@ -921,29 +1067,6 @@ function showRewarded(onReward) {
     });
 }
 
-function maybeShowInterstitial() {
-    const sdk = window.ysdk;
-    if (!sdk || !sdk.adv || typeof sdk.adv.showFullscreenAdv !== "function") return;
-
-    const now = Date.now();
-    if (interstitialShowing) return;
-    if (lastInterstitialShownAt && now - lastInterstitialShownAt < INTERSTITIAL_INTERVAL_MS) return;
-
-    interstitialShowing = true;
-    sdk.adv.showFullscreenAdv({
-        callbacks: {
-            onClose: function() {
-                interstitialShowing = false;
-                lastInterstitialShownAt = Date.now();
-            },
-            onError: function(err) {
-                console.warn("FullscreenAdv error", err);
-                interstitialShowing = false;
-                lastInterstitialShownAt = Date.now();
-            }
-        }
-    });
-}
 
 // ---------- UI обновление ----------
 
@@ -2363,14 +2486,6 @@ function initShopFilters() {
 }
 
 function initButtons() {
-    // floating language button
-    const langFloatBtn = document.getElementById("itcLangSwitchBtn");
-    if (langFloatBtn) {
-        langFloatBtn.addEventListener("click", function() {
-            const next = (itcCurrentLang === "ru") ? "en" : "ru";
-            itcSetLanguage(next);
-        });
-    }
 
     if (elClickBtn) {
         elClickBtn.addEventListener("click", function(evt) {
@@ -2538,7 +2653,10 @@ function initLoops() {
         updateTaskCooldowns();
         updateTaskTimersDOM();
         updateAdBoostUI();
-        maybeShowInterstitial();
+        // автосохранение прогресса
+        saveGame();
+        // fullscreen-реклама отключена для соответствия п. 4.4 требований платформы
+        // maybeShowInterstitial();
     }, 1000);
 }
 
@@ -2546,6 +2664,7 @@ function initLoops() {
 // ---------- Старт ----------
 
 (function start() {
+    loadGame();
     itcInitLanguage();
     clearModsUI();
     updateHUD();
@@ -2559,4 +2678,4 @@ function initLoops() {
     initShopFilters();
     initButtons();
     initLoops();
-})();
+})();;

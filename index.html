@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <title>Industrial Town Clicker v13</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ультра Кликер / Ultra Clicker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body class="itc-body">
@@ -288,11 +288,22 @@
                 window.ysdk = sdk;
                 try {
                     if (sdk.environment && sdk.environment.i18n && sdk.environment.i18n.lang) {
-                        // сохраняем язык окружения для игры
-                        window.itcYaLang = sdk.environment.i18n.lang;
+                        var lang = sdk.environment.i18n.lang;
+                        window.itcYaLang = lang;
+                        if (window.itcApplySdkLanguage) {
+                            window.itcApplySdkLanguage(lang);
+                        }
                     }
                 } catch (e) {
                     console.warn("YaGames i18n error", e);
+                }
+                try {
+                    if (sdk.features && sdk.features.LoadingAPI) {
+                        sdk.features.LoadingAPI.setLoadingProgress(100);
+                        sdk.features.LoadingAPI.ready();
+                    }
+                } catch (e) {
+                    console.warn("LoadingAPI error", e);
                 }
                 console.log("YaGames SDK initialized");
             }).catch(function(err) {
@@ -303,10 +314,6 @@
         }
     })();
 </script>
-
-<div class="itc-lang-floating">
-    <button class="itc-lang-floating-btn" id="itcLangSwitchBtn">RU</button>
-</div>
 <script src="main.js"></script>
 </body>
 </html>
